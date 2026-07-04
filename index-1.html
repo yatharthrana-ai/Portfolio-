@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yatharth Rana — Digital Growth, Performance & 3D Web Experience</title>
+  
+  <!-- Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- GSAP & ScrollTrigger -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+  <!-- Lenis Smooth Scroll CDN -->
+  <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Space Grotesk', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              bg: '#030303',
+              card: 'rgba(10, 10, 10, 0.75)',
+              blue: '#2563EB',
+              sky: '#06B6D4',
+              violet: '#8B5CF6',
+              mute: '#94A3B8',
+              edge: 'rgba(255, 255, 255, 0.05)',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar Configuration */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #030303; }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 100px;
+      border: 2px solid #030303;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: #06B6D4; }
+
+    html {
+      background-color: #030303;
+    }
+
+    body {
+      overflow-x: hidden;
+      color: #ffffff;
+      background-color: #030303;
+    }
+
+    /* Fixed Background WebGL Canvas */
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Film Grain Layer */
+    .film-grain {
+      position: fixed;
+      inset: 0;
+      z-index: 99;
+      pointer-events: none;
+      opacity: 0.04;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    /* Section Overlay */
+    .section-glass {
+      position: relative;
+      z-index: 10;
+      background: rgba(3, 3, 3, 0.45);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .glass-panel {
+      background: rgba(10, 10, 10, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .glass-card-interactive {
+      position: relative;
+      background: rgba(12, 12, 12, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: border-color 0.4s, background-color 0.4s, box-shadow 0.4s, transform 0.4s ease-out;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+
+    /* Interactive Spotlighting Border Effect */
+    .spotlight-card::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      padding: 1px;
+      background: radial-gradient(
+        250px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(6, 182, 212, 0.3),
+        transparent 50%
+      );
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .scroll-bar {
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(to bottom, #06B6D4, transparent);
+      position: relative;
+      overflow: hidden;
+    }
+    .scroll-bar::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 30%;
+      background: #fff;
+      animation: scroll-anim 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+    }
+    @keyframes scroll-anim {
+      0% { top: -30%; }
+      100% { top: 110%; }
+    }
+
+    /* Kinetic Split-reveal masking elements */
+    .reveal-mask {
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: bottom;
+    }
+
+    /* Custom cursor design */
+    #custom-cursor {
+      display: none;
+    }
+    @media (min-width: 1024px) {
+      #custom-cursor {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body class="font-sans antialiased">
+
+  <!-- ── FLUID TRAILING CUSTOM CURSOR ── -->
+  <div id="custom-cursor" class="fixed pointer-events-none w-2.5 h-2.5 bg-brand-sky rounded-full z-[100] -translate-x-1/2 -translate-y-1/2 mix-blend-screen transition-transform duration-100 ease-out"></div>
+  <div id="custom-cursor-ring" class="fixed pointer-events-none w-8 h-8 border border-brand-violet/50 rounded-full z-[100] -translate-x-1/2 -translate-y-1/2 mix-blend-screen transition-all duration-300 ease-out hidden lg:block"></div>
+
+  <!-- ── 3D WEBGL INTERACTIVE CANVAS ── -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- ── CINEMATIC FILM GRAIN ── -->
+  <div class="film-grain"></div>
+
+  <!-- ── NAVIGATION ── -->
+  <nav id="nav" class="fixed top-0 left-0 right-0 z-50 px-6 py-6 md:px-12 flex items-center justify-between transition-all duration-500 bg-transparent">
+    <a href="#hero" class="nav-link font-display font-bold text-xl tracking-tight text-white group" data-section="hero">
+      YR<span class="text-brand-sky transition-colors duration-300 group-hover:text-brand-violet">.</span>
+    </a>
+    
+    <ul class="hidden md:flex items-center gap-8 text-xs font-semibold tracking-wider uppercase text-brand-mute">
+      <li>
+        <a href="#about" class="nav-link hover:text-white transition-colors relative py-2" data-section="about">
+          About
+          <span class="nav-indicator absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-brand-sky to-brand-violet rounded-full scale-x-0 origin-left transition-transform duration-300"></span>
+        </a>
+      </li>
+      <li>
+        <a href="#skills" class="nav-link hover:text-white transition-colors relative py-2" data-section="skills">
+          Skills
+          <span class="nav-indicator absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-brand-sky to-brand-violet rounded-full scale-x-0 origin-left transition-transform duration-300"></span>
+        </a>
+      </li>
+      <li>
+        <a href="#services" class="nav-link hover:text-white transition-colors relative py-2" data-section="services">
+          Services
+          <span class="nav-indicator absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-brand-sky to-brand-violet rounded-full scale-x-0 origin-left transition-transform duration-300"></span>
+        </a>
+      </li>
+      <li>
+        <a href="#work" class="nav-link hover:text-white transition-colors relative py-2" data-section="work">
+          Work
+          <span class="nav-indicator absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-brand-sky to-brand-violet rounded-full scale-x-0 origin-left transition-transform duration-300"></span>
+        </a>
+      </li>
+      <li>
+        <a href="#approach" class="nav-link hover:text-white transition-colors relative py-2" data-section="approach">
+          Approach
+          <span class="nav-indicator absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-brand-sky to-brand-violet rounded-full scale-x-0 origin-left transition-transform duration-300"></span>
+        </a>
+      </li>
+      <li>
+        <a href="#contact" class="nav-link hover:text-white transition-colors relative py-2" data-section="contact">
+          Contact
+          <span class="nav-indicator absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-brand-sky to-brand-violet rounded-full scale-x-0 origin-left transition-transform duration-300"></span>
+        </a>
+      </li>
+    </ul>
+
+    <a href="#contact" class="nav-link font-display text-xs font-semibold px-6 py-3 rounded-full border border-white/10 hover:border-brand-sky hover:bg-brand-sky/5 text-white transition-all duration-300" data-section="contact">
+      Get in Touch
+    </a>
+  </nav>
+
+  <!-- ── HERO SECTION ── -->
+  <section id="hero" class="relative min-h-screen w-full flex items-center justify-center py-24 px-6 md:px-12 overflow-hidden z-10">
+    <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative pt-12">
+      
+      <div class="lg:col-span-7 flex flex-col items-start text-left">
+        <div class="hero-reveal translate-y-8 opacity-0 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-brand-sky/20 bg-brand-sky/5 backdrop-blur-md mb-8">
+          <span class="w-2 h-2 rounded-full bg-brand-sky animate-ping"></span>
+          <span class="font-display text-[10px] font-semibold tracking-[0.18em] uppercase text-brand-sky">
+            SEO &amp; Digital Growth Marketer
+          </span>
+        </div>
+
+        <h1 class="font-display font-bold leading-[1.0] mb-6 select-none">
+          <span class="reveal-mask block">
+            <span class="hero-reveal block text-5xl sm:text-7xl md:text-8xl tracking-tight text-white mb-2 translate-y-full opacity-0">
+              Yatharth Rana
+            </span>
+          </span>
+          <span class="reveal-mask block">
+            <span class="hero-reveal block text-3xl sm:text-5xl md:text-6xl tracking-tight bg-gradient-to-r from-brand-blue via-brand-sky to-brand-violet bg-clip-text text-transparent pb-3 translate-y-full opacity-0">
+              Digital Growth Marketer
+            </span>
+          </span>
+        </h1>
+
+        <p class="hero-reveal translate-y-8 opacity-0 text-base md:text-lg text-brand-mute font-light max-w-xl mb-10 leading-relaxed">
+          SEO, social media marketing, performance-focused strategies, and WordPress websites designed to help brands get attention, traffic, and real online growth.
+        </p>
+
+        <div class="hero-reveal translate-y-8 opacity-0 flex flex-wrap gap-4 mb-12">
+          <a href="#skills" class="nav-link px-8 py-4 rounded-full font-display text-sm font-semibold tracking-wide bg-gradient-to-r from-brand-blue to-brand-sky text-white hover:shadow-lg hover:shadow-brand-sky/20 hover:scale-[1.02] active:scale-95 transition-all duration-300" data-section="skills">
+            View My Skills
+          </a>
+          <a href="#contact" class="nav-link px-8 py-4 rounded-full font-display text-sm font-semibold tracking-wide bg-white/5 border border-white/10 text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300" data-section="contact">
+            Contact Me
+          </a>
+        </div>
+
+        <div class="hero-reveal translate-y-8 opacity-0 w-full grid grid-cols-3 gap-6 pt-8 border-t border-brand-edge">
+          <div>
+            <div class="font-display text-2xl md:text-3xl font-bold text-white"><span class="counter" data-target="50">0</span>+</div>
+            <div class="text-[10px] font-medium tracking-wider text-brand-mute uppercase mt-1">Deployments</div>
+          </div>
+          <div>
+            <div class="font-display text-2xl md:text-3xl font-bold text-white"><span class="counter" data-target="6">0</span>K+</div>
+            <div class="text-[10px] font-medium tracking-wider text-brand-mute uppercase mt-1">Social Followers</div>
+          </div>
+          <div>
+            <div class="font-display text-2xl md:text-3xl font-bold text-white"><span class="counter" data-target="25">0</span>K+</div>
+            <div class="text-[10px] font-medium tracking-wider text-brand-mute uppercase mt-1">Peak Reel Views</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lg:col-span-5 relative flex items-center justify-center min-h-[450px]">
+        <div class="relative w-full max-w-[380px] flex flex-col gap-4">
+          <div class="floating-card-init opacity-0 scale-90 translate-y-12">
+            <div class="glass-card-interactive spotlight-card rounded-2xl overflow-hidden p-6 lg:p-8 relative">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-brand-sky/10 border border-brand-sky/20 flex items-center justify-center text-brand-sky">
+                  <i class="fa-solid fa-chart-line text-lg"></i>
+                </div>
+                <div>
+                  <h4 class="font-display font-bold text-sm text-white">SEO Growth</h4>
+                  <p class="text-xs text-brand-mute mt-1">Rankings that outlive campaign lifecycles.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="floating-card-init opacity-0 scale-90 translate-y-12">
+            <div class="glass-card-interactive spotlight-card rounded-2xl overflow-hidden p-6 lg:p-8 relative ml-4 lg:ml-8 border-l-2 border-l-brand-violet">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-brand-violet/10 border border-brand-violet/20 flex items-center justify-center text-brand-violet">
+                  <i class="fa-solid fa-square-share-nodes text-lg"></i>
+                </div>
+                <div>
+                  <h4 class="font-display font-bold text-sm text-white">Social Reach</h4>
+                  <p class="text-xs text-brand-mute mt-1">Creative campaigns driving views.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="floating-card-init opacity-0 scale-90 translate-y-12">
+            <div class="glass-card-interactive spotlight-card rounded-2xl overflow-hidden p-6 lg:p-8 relative">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-brand-blue/10 border border-brand-blue/20 flex items-center justify-center text-brand-blue">
+                  <i class="fa-solid fa-bolt text-lg"></i>
+                </div>
+                <div>
+                  <h4 class="font-display font-bold text-sm text-white">Ad Campaigns</h4>
+                  <p class="text-xs text-brand-mute mt-1">High conversion performance marketing.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Scroll Hint -->
+    <div id="sh" class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-60">
+      <span class="font-display text-[9px] font-semibold tracking-widest text-brand-mute uppercase">Explore Framework</span>
+      <div class="scroll-bar"></div>
+    </div>
+  </section>
+
+  <!-- ── ABOUT ME ── -->
+  <section id="about" class="section-glass py-24 lg:py-32 px-6 md:px-12">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex flex-col items-start text-left mb-16">
+        <span class="font-display text-xs font-semibold tracking-[0.2em] text-brand-sky uppercase mb-3 flex items-center gap-2">
+          <span class="w-1.5 h-1.5 bg-brand-sky rounded-full"></span> About Me
+        </span>
+        <h2 class="font-display text-3xl md:text-5xl font-bold tracking-tight text-white max-w-2xl leading-tight">
+          Combining creative thinking, strategic ideas, and <span>digital execution</span>.
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        <div class="lg:col-span-7 text-brand-mute font-light text-base md:text-lg leading-relaxed flex flex-col gap-6">
+          <p>
+            I am <strong class="text-white font-medium font-display">Yatharth Rana</strong>, a digital marketing-focused professional from Delhi. I am passionate about helping brands grow online through SEO, social media strategy, performance marketing, creative content ideas, and WordPress/Elementor websites. 
+          </p>
+          <p>
+            I combine marketing thinking, creative ideas, and digital execution to help businesses build a stronger online presence. I develop fast, fully responsive, and highly optimized platforms designed specifically to convert and retain visitors. 
+          </p>
+          <p>
+            By merging technical SEO frameworks with performance-optimized WordPress builds, I elevate brand presence without sacrificing design aesthetics. My methodology is data-driven, focused on tracking analytics, improving core vitals, and establishing visibility on search rankings.
+          </p>
+        </div>
+
+        <div class="lg:col-span-5 flex flex-col gap-4">
+          <div class="glass-card-interactive spotlight-card rounded-2xl p-8 border-l-2 border-l-brand-sky bg-brand-bg/40">
+            <h4 class="font-display font-bold text-base text-white mb-2">My Brand Mission</h4>
+            <p class="text-sm text-brand-mute leading-relaxed font-light">
+              "We construct interfaces that solve real-world user search parameters, turning click paths into scalable brand relationships. Simple and functional digital strategies always win."
+            </p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="glass-panel p-6 rounded-2xl flex flex-col items-start">
+              <span class="font-display text-2xl font-bold text-white mb-1">
+                <i class="fa-solid fa-graduation-cap text-brand-sky mr-1 text-xl"></i> 2nd Yr
+              </span>
+              <span class="text-[10px] font-semibold tracking-wider text-brand-mute uppercase">Satyawati College</span>
+            </div>
+            <div class="glass-panel p-6 rounded-2xl flex flex-col items-start">
+              <span class="font-display text-2xl font-bold text-white mb-1">
+                <i class="fa-solid fa-certificate text-brand-violet mr-1 text-xl"></i> Certified
+              </span>
+              <span class="text-[10px] font-semibold tracking-wider text-brand-mute uppercase">SkillCircle Digital</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SKILLS & EXPERTISE ── -->
+  <section id="skills" class="section-glass py-24 lg:py-32 px-6 md:px-12">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+        <div class="flex flex-col items-start text-left">
+          <span class="font-display text-xs font-semibold tracking-[0.2em] text-brand-violet uppercase mb-3 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 bg-brand-violet rounded-full"></span> Skills &amp; Expertise
+          </span>
+          <h2 class="font-display text-3xl md:text-5xl font-bold tracking-tight text-white">
+            High-Performance Digital Capabilities
+          </h2>
+        </div>
+
+        <!-- Filter Interface -->
+        <div class="flex flex-wrap gap-2">
+          <button class="filter-btn active px-5 py-2.5 rounded-full font-display text-xs font-semibold tracking-wider uppercase transition-all duration-300 bg-brand-violet text-white" data-filter="all">
+            <i class="fa-solid fa-layer-group mr-1.5"></i>All Stack
+          </button>
+          <button class="filter-btn px-5 py-2.5 rounded-full font-display text-xs font-semibold tracking-wider uppercase transition-all duration-300 bg-white/5 text-brand-mute border border-white/5 hover:border-white/10 hover:text-white" data-filter="seo">
+            <i class="fa-solid fa-magnifying-glass-chart mr-1.5"></i>SEO
+          </button>
+          <button class="filter-btn px-5 py-2.5 rounded-full font-display text-xs font-semibold tracking-wider uppercase transition-all duration-300 bg-white/5 text-brand-mute border border-white/5 hover:border-white/10 hover:text-white" data-filter="ads">
+            <i class="fa-solid fa-bullseye mr-1.5"></i>Ads
+          </button>
+          <button class="filter-btn px-5 py-2.5 rounded-full font-display text-xs font-semibold tracking-wider uppercase transition-all duration-300 bg-white/5 text-brand-mute border border-white/5 hover:border-white/10 hover:text-white" data-filter="web">
+            <i class="fa-brands fa-wordpress mr-1.5"></i>WordPress
+          </button>
+          <button class="filter-btn px-5 py-2.5 rounded-full font-display text-xs font-semibold tracking-wider uppercase transition-all duration-300 bg-white/5 text-brand-mute border border-white/5 hover:border-white/10 hover:text-white" data-filter="creative">
+            <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>Creative
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="skills-grid">
+        <!-- Card 1 -->
+        <div class="skill-card-item" data-cat="seo">
+          <div class="glass-card-interactive spotlight-card rounded-2xl overflow-hidden p-6 lg:p-8 h-full flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-[10px] font-bold tracking-widest text-brand-sky uppercase bg-brand-sky/10 border border-brand-sky/20 px-2.5 py-1 rounded-full inline-block">SEO</span>
+                <i class="fa-solid fa-gears text-brand-sky text-lg"></i>
+              </div>
+              <h3 class="font-display font-bold text-lg text-white mb-2">Technical SEO Optimization</h3>
+              <p class="text-sm text-brand-mute font-light leading-relaxed">Crawl resolution, indexing architecture, metadata improvements, and search performance audits.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="skill-card-item" data-cat="seo">
+          <div class="glass-card-interactive spotlight-card rounded-2xl overflow-hidden p-6 lg:p-8 h-full flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-[10px] font-bold tracking-widest text-brand-sky uppercase bg-brand-sky/10 border border-brand-sky/20 px-2.5 py-1 rounded-full inline-block">SEO</span>
+                <i class="fa-solid fa-key text-brand-sky text-lg"></i>
+              </div>
+              <h3 class="font-display font-bold text-lg text-white mb-2">Keyword Strategy</h3>
+              <p class="text-sm text-brand-mute font-light leading-relaxed">Niche validation, semantic mapping, cluster creation, and competitor organic gap analysis.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="skill-card-item" data-cat="ads">
+          <div class="glass-card-interactive spotlight-card rounded-2xl overflow-hidden p-6 lg:p-8 h-full flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-[10px] font-bold tracking-widest text-brand-violet uppercase bg-brand-violet/10 border border-brand-violet/20 px-2.5 py-1 rounded-full inline-block">Ads</span>
+                <i class="fa-brands fa-meta text-brand-violet text-lg"></i>
+              </div>
+              <h3 class="font-display font-bold text-lg text-white mb-2">Meta &amp; Facebook Ads</h3>
+              <p class="text-sm text-brand-mute font-light leading-relaxed">Custom demographic profiling, pixel setups, layout optimization, and continuous funnel improvements.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="skill-card-item" data-cat="ads">
+          <div class="glass-card-interactive spotlight-card rounded-2xl overflow-hidden p-6 lg:p-8 h-full flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-[10px] font-bold tracking-widest text-brand-violet uppercase bg-brand-violet/10 border border-brand-violet/20 px-2.5 py-1 rounded-full inline-block">Ads</span>
+                <i class="fa-brands fa-google text-brand-violet text-lg"></i>
+              </div>
+              <h3 class="font-display font-bold text-lg text-white mb-2">Google &amp; YouTube Ads</h3>
+              <p class="text-sm text-brand-mute font-light leading-relaxed">Strategic campaign creations, targeting structures, audience scaling, and performance marketing budgets management.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="skill-card-item" data-cat="web">
+          <div class="glass-card-interactive spotlight-card rounded-2xl overflow-hidden p-6 lg:p-8 h-full flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-[10px] font-bold tracking-widest text-brand-blue uppercase bg-brand-blue/10 border border-brand-blue/20 px-2.5 py-1 rounded-full inline-block">WordPress</span>
+                <i class="fa-solid fa-cubes text-brand-blue text-lg"></i>
+              </div>
+              <h3 class="font-display font-bold text-lg text-white mb-2">Elementor Website Builds</h3>
+              <p class="text-sm text-brand-mute font-light leading-relaxed">Fast-loading layouts, custom responsive landing pages, UX adjustments, and structured website management.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="skill-card-item" data-cat="creative">
+          <div class="glass-card-interactive spotlight-card rounded-2xl overflow-hidden p-6 lg:p-8 h-full flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-[10px] font-bold tracking-widest text-brand-sky uppercase bg-brand-sky/10 border border-brand-sky/20 px-2.5 py-1 rounded-full inline-block">Creative</span>
+                <i class="fa-solid fa-pen-nib text-brand-sky text-lg"></i>
+              </div>
+              <h3 class="font-display font-bold text-lg text-white mb-2">Content Strategy &amp; Ideas</h3>
+              <p class="text-sm text-brand-mute font-light leading-relaxed">Formulating highly shareable, conversion-focused layout guides, promotional blueprints, and creative hooks.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SERVICES ── -->
+  <section id="services" class="section-glass py-24 lg:py-32 px-6 md:px-12">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex flex-col items-start text-left mb-16">
+        <span class="font-display text-xs font-semibold tracking-[0.2em] text-brand-sky uppercase mb-3 flex items-center gap-2">
+          <span class="w-1.5 h-1.5 bg-brand-sky rounded-full"></span> Services
+        </span>
+        <h2 class="font-display text-3xl md:text-5xl font-bold tracking-tight text-white max-w-2xl leading-tight">
+          What I can offer to <span>improve your presence</span>.
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="glass-card-interactive spotlight-card rounded-2xl p-8 relative border-l-2 border-brand-sky/20 hover:border-brand-sky transition-colors duration-500">
+          <div class="flex flex-col gap-6">
+            <div class="w-14 h-14 rounded-2xl bg-brand-sky/10 border border-brand-sky/10 flex items-center justify-center text-brand-sky">
+              <i class="fa-solid fa-magnifying-glass-chart text-xl"></i>
+            </div>
+            <div>
+              <h3 class="font-display font-bold text-xl text-white mb-3">SEO Optimization</h3>
+              <p class="text-sm text-brand-mute font-light leading-relaxed">Comprehensive keyword indexing setups, structured markup configurations, rendering adjustments, and organic rank scale support.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card-interactive spotlight-card rounded-2xl p-8 relative border-l-2 border-brand-sky/20 hover:border-brand-sky transition-colors duration-500">
+          <div class="flex flex-col gap-6">
+            <div class="w-14 h-14 rounded-2xl bg-brand-sky/10 border border-brand-sky/10 flex items-center justify-center text-brand-sky">
+              <i class="fa-solid fa-laptop-code text-xl"></i>
+            </div>
+            <div>
+              <h3 class="font-display font-bold text-xl text-white mb-3">WordPress &amp; Elementor</h3>
+              <p class="text-sm text-brand-mute font-light leading-relaxed">Assembling high-converting landing pages, structured corporate websites, speed optimization passes, and consistent server/site management.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card-interactive spotlight-card rounded-2xl p-8 relative border-l-2 border-brand-sky/20 hover:border-brand-sky transition-colors duration-500">
+          <div class="flex flex-col gap-6">
+            <div class="w-14 h-14 rounded-2xl bg-brand-sky/10 border border-brand-sky/10 flex items-center justify-center text-brand-sky">
+              <i class="fa-solid fa-bullseye text-xl"></i>
+            </div>
+            <div>
+              <h3 class="font-display font-bold text-xl text-white mb-3">Ad Campaign Support</h3>
+              <p class="text-sm text-brand-mute font-light leading-relaxed">Strategic audience setups, cost-per-lead optimization audits, content curation support, and comprehensive marketing setups.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card-interactive spotlight-card rounded-2xl p-8 relative border-l-2 border-brand-sky/20 hover:border-brand-sky transition-colors duration-500">
+          <div class="flex flex-col gap-6">
+            <div class="w-14 h-14 rounded-2xl bg-brand-sky/10 border border-brand-sky/15 flex items-center justify-center text-brand-sky">
+              <i class="fa-solid fa-share-nodes text-xl"></i>
+            </div>
+            <div>
+              <h3 class="font-display font-bold text-xl text-white mb-3">Social Media Promotion</h3>
+              <p class="text-sm text-brand-mute font-light leading-relaxed">Developing consistent content templates, video execution layouts, audience retention maps, and general brand growth advisory services.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SELECTED PROJECTS ── -->
+  <section id="work" class="section-glass py-24 lg:py-32 px-6 md:px-12">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex flex-col items-start text-left mb-16">
+        <span class="font-display text-xs font-semibold tracking-[0.2em] text-brand-violet uppercase mb-3 flex items-center gap-2">
+          <span class="w-1.5 h-1.5 bg-brand-violet rounded-full"></span> Selected Projects
+        </span>
+        <h2 class="font-display text-3xl md:text-5xl font-bold tracking-tight text-white max-w-2xl leading-tight">
+          Proven outcomes in <span>digital positioning</span>.
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Project 1: SEO -->
+        <div class="glass-card-interactive spotlight-card rounded-2xl overflow-hidden p-6 md:p-8 flex flex-col justify-between h-full bg-gradient-to-b from-brand-sky/5 to-transparent">
+          <div>
+            <div class="flex items-center justify-between mb-6">
+              <span class="text-[10px] font-bold tracking-wider text-brand-sky uppercase px-2.5 py-1 bg-brand-sky/10 border border-brand-sky/20 rounded-full">Search Engine Blueprint</span>
+              <span class="text-xs text-brand-mute"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+            </div>
+            <h3 class="font-display font-bold text-xl text-white mb-3">Organic Optimization Strategy</h3>
+            <p class="text-sm text-brand-mute font-light leading-relaxed mb-6">Designed structured semantic site indexes and completed crawl configuration adjustments, which contributed to measurable organic index improvements.</p>
+          </div>
+          <div class="pt-6 border-t border-brand-edge flex justify-between items-center">
+            <div>
+              <div class="font-display text-lg font-bold text-white">+140%</div>
+              <div class="text-[9px] font-semibold tracking-wider text-brand-mute uppercase">Search Visibility</div>
+            </div>
+            <div>
+              <div class="font-display text-lg font-bold text-white">4.8k</div>
+              <div class="text-[9px] font-semibold tracking-wider text-brand-mute uppercase">Keyword Impressions</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project 2: Paid Ads -->
+        <div class="glass-card-interactive spotlight-card rounded-2xl overflow-hidden p-6 md:p-8 flex flex-col justify-between h-full bg-gradient-to-b from-brand-violet/5 to-transparent">
+          <div>
+            <div class="flex items-center justify-between mb-6">
+              <span class="text-[10px] font-bold tracking-wider text-brand-violet uppercase px-2.5 py-1 bg-brand-violet/10 border border-brand-violet/20 rounded-full">Performance Marketing</span>
+              <span class="text-xs text-brand-mute"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+            </div>
+            <h3 class="font-display font-bold text-xl text-white mb-3">Audience Funnel Setup</h3>
+            <p class="text-sm text-brand-mute font-light leading-relaxed mb-6">Configured structured conversion campaigns and custom demographic filters across Meta &amp; Google ad networks for cost-per-lead optimization.</p>
+          </div>
+          <div class="pt-6 border-t border-brand-edge flex justify-between items-center">
+            <div>
+              <div class="font-display text-lg font-bold text-white">3.8x</div>
+              <div class="text-[9px] font-semibold tracking-wider text-brand-mute uppercase">Conversion Return</div>
+            </div>
+            <div>
+              <div class="font-display text-lg font-bold text-white">-35%</div>
+              <div class="text-[9px] font-semibold tracking-wider text-brand-mute uppercase">Cost Per Acquisition</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project 3: WordPress -->
+        <div class="glass-card-interactive spotlight-card rounded-2xl overflow-hidden p-6 md:p-8 flex flex-col justify-between h-full bg-gradient-to-b from-brand-blue/5 to-transparent">
+          <div>
+            <div class="flex items-center justify-between mb-6">
+              <span class="text-[10px] font-bold tracking-wider text-brand-blue uppercase px-2.5 py-1 bg-brand-blue/10 border border-brand-blue/20 rounded-full">Web Platforms</span>
+              <span class="text-xs text-brand-mute"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+            </div>
+            <h3 class="font-display font-bold text-xl text-white mb-3">WordPress Landing Architecture</h3>
+            <p class="text-sm text-brand-mute font-light leading-relaxed mb-6">Assembled custom Elementor designs paired with page speed performance enhancements to secure clean page responsive transitions.</p>
+          </div>
+          <div class="pt-6 border-t border-brand-edge flex justify-between items-center">
+            <div>
+              <div class="font-display text-lg font-bold text-white">96+</div>
+              <div class="text-[9px] font-semibold tracking-wider text-brand-mute uppercase">Speed Performance Score</div>
+            </div>
+            <div>
+              <div class="font-display text-lg font-bold text-white">&lt; 1.2s</div>
+              <div class="text-[9px] font-semibold tracking-wider text-brand-mute uppercase">Interactive Load Time</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SOCIAL MEDIA STATS ── -->
+  <section id="stats" class="section-glass py-24 lg:py-32 px-6 md:px-12">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <div class="lg:col-span-5 flex flex-col items-start text-left">
+          <span class="font-display text-xs font-semibold tracking-[0.2em] text-brand-violet uppercase mb-3 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 bg-brand-violet rounded-full"></span> Social Proof
+          </span>
+          <h2 class="font-display text-3xl md:text-5xl font-bold tracking-tight text-white mb-6">
+            Audience Engagement <br />
+            <span>Telemetry</span>
+          </h2>
+          <p class="text-base text-brand-mute font-light leading-relaxed mb-8">
+            Developing dynamic content patterns to expand audience size and secure reliable community spaces across social platforms. We prove concepts through real audience metrics.
+          </p>
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-brand-violet/20 bg-brand-violet/5">
+            <i class="fa-brands fa-instagram text-brand-violet"></i>
+            <span class="font-display text-[10px] font-semibold tracking-wider text-white uppercase">
+              @yatharthrana12
+            </span>
+          </div>
+        </div>
+
+        <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div class="glass-card-interactive spotlight-card rounded-2xl p-8 bg-gradient-to-tr from-brand-violet/5 to-transparent">
+            <div class="flex flex-col items-start">
+              <span class="font-display text-5xl font-bold text-white mb-2"><span class="counter" data-target="6">0</span>K+</span>
+              <h4 class="font-display font-bold text-sm text-white mb-1">Instagram Followers</h4>
+              <p class="text-xs text-brand-mute font-light leading-relaxed">Engaged, growth-driven, content-focused network established organically.</p>
+            </div>
+          </div>
+
+          <div class="glass-card-interactive spotlight-card rounded-2xl p-8 bg-gradient-to-tr from-brand-sky/5 to-transparent">
+            <div class="flex flex-col items-start">
+              <span class="font-display text-5xl font-bold text-white mb-2"><span class="counter" data-target="10">0</span>K</span>
+              <h4 class="font-display font-bold text-sm text-white mb-1">Average Reel Views</h4>
+              <p class="text-xs text-brand-mute font-light leading-relaxed">Stable, consistent performance indicators driven by structural algorithm layouts.</p>
+            </div>
+          </div>
+
+          <div class="glass-card-interactive spotlight-card rounded-2xl p-8 sm:col-span-2 bg-gradient-to-tr from-brand-blue/5 to-transparent">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <span class="font-display text-5xl font-bold text-white mb-2"><span class="counter" data-target="25">0</span>K</span>
+                <h4 class="font-display font-bold text-sm text-white mb-1">Peak Reel Views</h4>
+                <p class="text-xs text-brand-mute font-light leading-relaxed max-w-md">Maximum viral range verified by strategic hook integrations and dynamic audience retention adjustments.</p>
+              </div>
+              <div class="flex items-center gap-2 bg-brand-blue/15 border border-brand-blue/20 p-3 rounded-xl">
+                <i class="fa-solid fa-chart-line text-brand-blue text-lg"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── WORK APPROACH ── -->
+  <section id="approach" class="section-glass py-24 lg:py-32 px-6 md:px-12">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex flex-col items-start text-left mb-16">
+        <span class="font-display text-xs font-semibold tracking-[0.2em] text-brand-sky uppercase mb-3 flex items-center gap-2">
+          <span class="w-1.5 h-1.5 bg-brand-sky rounded-full"></span> My Process
+        </span>
+        <h2 class="font-display text-3xl md:text-5xl font-bold tracking-tight text-white max-w-2xl leading-tight">
+          How I help brands <span>scale online visibility</span>.
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <!-- Step 1 -->
+        <div class="glass-card-interactive spotlight-card rounded-2xl p-8 h-full flex flex-col justify-between border-t-2 border-t-brand-edge hover:border-t-brand-sky transition-colors duration-500">
+          <div>
+            <div class="flex items-center justify-between mb-6">
+              <span class="font-display text-4xl font-bold bg-gradient-to-r from-white/20 to-transparent bg-clip-text text-transparent block">01</span>
+              <i class="fa-solid fa-brain text-brand-sky/50 text-xl"></i>
+            </div>
+            <h3 class="font-display font-bold text-base text-white mb-2">Understand</h3>
+            <p class="text-xs text-brand-mute font-light leading-relaxed">Deep analysis of core business targets, target buyer personas, and structural digital limits.</p>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="glass-card-interactive spotlight-card rounded-2xl p-8 h-full flex flex-col justify-between border-t-2 border-t-brand-edge hover:border-t-brand-sky transition-colors duration-500">
+          <div>
+            <div class="flex items-center justify-between mb-6">
+              <span class="font-display text-4xl font-bold bg-gradient-to-r from-white/20 to-transparent bg-clip-text text-transparent block">02</span>
+              <i class="fa-solid fa-compass text-brand-sky/50 text-xl"></i>
+            </div>
+            <h3 class="font-display font-bold text-base text-white mb-2">Plan</h3>
+            <p class="text-xs text-brand-mute font-light leading-relaxed">Drafting cohesive search marketing blueprints, social distribution calendars, and paid ad frameworks.</p>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="glass-card-interactive spotlight-card rounded-2xl p-8 h-full flex flex-col justify-between border-t-2 border-t-brand-edge hover:border-t-brand-sky transition-colors duration-500">
+          <div>
+            <div class="flex items-center justify-between mb-6">
+              <span class="font-display text-4xl font-bold bg-gradient-to-r from-white/20 to-transparent bg-clip-text text-transparent block">03</span>
+              <i class="fa-solid fa-laptop-code text-brand-sky/50 text-xl"></i>
+            </div>
+            <h3 class="font-display font-bold text-base text-white mb-2">Build</h3>
+            <p class="text-xs text-brand-mute font-light leading-relaxed">Assembling performance-focused WordPress landers, tracking links, and optimized user flows.</p>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="glass-card-interactive spotlight-card rounded-2xl p-8 h-full flex flex-col justify-between border-t-2 border-t-brand-edge hover:border-t-brand-sky transition-colors duration-500">
+          <div>
+            <div class="flex items-center justify-between mb-6">
+              <span class="font-display text-4xl font-bold bg-gradient-to-r from-white/20 to-transparent bg-clip-text text-transparent block">04</span>
+              <i class="fa-solid fa-bullhorn text-brand-sky/50 text-xl"></i>
+            </div>
+            <h3 class="font-display font-bold text-base text-white mb-2">Promote</h3>
+            <p class="text-xs text-brand-mute font-light leading-relaxed">Deploying creative campaign hooks, paid targeting segments, and brand growth loops across networks.</p>
+          </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="glass-card-interactive spotlight-card rounded-2xl p-8 h-full flex flex-col justify-between border-t-2 border-t-brand-edge hover:border-t-brand-sky transition-colors duration-500">
+          <div>
+            <div class="flex items-center justify-between mb-6">
+              <span class="font-display text-4xl font-bold bg-gradient-to-r from-white/20 to-transparent bg-clip-text text-transparent block">05</span>
+              <i class="fa-solid fa-arrow-trend-up text-brand-sky/50 text-xl"></i>
+            </div>
+            <h3 class="font-display font-bold text-base text-white mb-2">Grow</h3>
+            <p class="text-xs text-brand-mute font-light leading-relaxed">Analyzing web statistics, refining negative keyword blocks, adjusting UX design, and scaling reach.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── WHY WORK WITH ME ── -->
+  <section id="why" class="section-glass py-24 lg:py-32 px-6 md:px-12">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex flex-col items-start text-left mb-16">
+        <span class="font-display text-xs font-semibold tracking-[0.2em] text-brand-violet uppercase mb-3 flex items-center gap-2">
+          <span class="w-1.5 h-1.5 bg-brand-violet rounded-full"></span> Core Credibility
+        </span>
+        <h2 class="font-display text-3xl md:text-5xl font-bold tracking-tight text-white max-w-2xl leading-tight">
+          Why work with a <span>growth-focused specialist</span>.
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Benefit 1 -->
+        <div class="glass-card-interactive spotlight-card p-8 rounded-2xl">
+          <div class="w-10 h-10 rounded-xl bg-brand-sky/10 border border-brand-sky/15 flex items-center justify-center text-brand-sky mb-6">
+            <i class="fa-solid fa-lightbulb text-base"></i>
+          </div>
+          <h4 class="font-display font-bold text-lg text-white mb-2">Creative Marketing Mindset</h4>
+          <p class="text-sm text-brand-mute font-light leading-relaxed">Formulating unique strategic campaigns rather than relying on generic, repetitive templates.</p>
+        </div>
+
+        <!-- Benefit 2 -->
+        <div class="glass-card-interactive spotlight-card p-8 rounded-2xl">
+          <div class="w-10 h-10 rounded-xl bg-brand-sky/10 border border-brand-sky/15 flex items-center justify-center text-brand-sky mb-6">
+            <i class="fa-solid fa-magnifying-glass-chart text-base"></i>
+          </div>
+          <h4 class="font-display font-bold text-lg text-white mb-2">Actionable SEO Focus</h4>
+          <p class="text-sm text-brand-mute font-light leading-relaxed">Prioritizing indexing corrections and organic keywords that capture active, ready-to-buy users.</p>
+        </div>
+
+        <!-- Benefit 3 -->
+        <div class="glass-card-interactive spotlight-card p-8 rounded-2xl">
+          <div class="w-10 h-10 rounded-xl bg-brand-sky/10 border border-brand-sky/15 flex items-center justify-center text-brand-sky mb-6">
+            <i class="fa-solid fa-code text-base"></i>
+          </div>
+          <h4 class="font-display font-bold text-lg text-white mb-2">Web &amp; Marketing Link</h4>
+          <p class="text-sm text-brand-mute font-light leading-relaxed">Integrating high-converting Elementor structures built directly around your customer acquisition goals.</p>
+        </div>
+
+        <!-- Benefit 4 -->
+        <div class="glass-card-interactive spotlight-card p-8 rounded-2xl">
+          <div class="w-10 h-10 rounded-xl bg-brand-sky/10 border border-brand-sky/15 flex items-center justify-center text-brand-sky mb-6">
+            <i class="fa-solid fa-chart-line text-base"></i>
+          </div>
+          <h4 class="font-display font-bold text-lg text-white mb-2">Data-Driven Optimization</h4>
+          <p class="text-sm text-brand-mute font-light leading-relaxed">Continuous analysis of performance campaigns to identify cost-saving parameters and optimize ROI.</p>
+        </div>
+
+        <!-- Benefit 5 -->
+        <div class="glass-card-interactive spotlight-card p-8 rounded-2xl">
+          <div class="w-10 h-10 rounded-xl bg-brand-sky/10 border border-brand-sky/15 flex items-center justify-center text-brand-sky mb-6">
+            <i class="fa-solid fa-gauge text-base"></i>
+          </div>
+          <h4 class="font-display font-bold text-lg text-white mb-2">Modern Presence Tuning</h4>
+          <p class="text-sm text-brand-mute font-light leading-relaxed">Adjusting platform assets to score highly on speed tests and maximize user retention parameters.</p>
+        </div>
+
+        <!-- Benefit 6 -->
+        <div class="glass-card-interactive spotlight-card p-8 rounded-2xl">
+          <div class="w-10 h-10 rounded-xl bg-brand-sky/10 border border-brand-sky/15 flex items-center justify-center text-brand-sky mb-6">
+            <i class="fa-solid fa-bolt text-base"></i>
+          </div>
+          <h4 class="font-display font-bold text-lg text-white mb-2">Adaptable Growth Speed</h4>
+          <p class="text-sm text-brand-mute font-light leading-relaxed">Continuously researching platform updates and search changes to maintain stable index rankings.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CONTACT SECTION ── -->
+  <section id="contact" class="section-glass py-24 lg:py-32 px-6 md:px-12">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        
+        <div class="lg:col-span-5 flex flex-col items-start text-left">
+          <span class="font-display text-xs font-semibold tracking-[0.2em] text-brand-sky uppercase mb-3 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 bg-brand-sky rounded-full"></span> Contact
+          </span>
+          <h2 class="font-display text-3xl md:text-5xl font-bold tracking-tight text-white mb-6 leading-tight">
+            Let's Build Something That <br />
+            <span>Gets Attention</span>
+          </h2>
+          <p class="text-base text-brand-mute font-light leading-relaxed mb-8">
+            Have a brand, business, or project that needs a stronger online presence? Let’s connect and create something that looks professional, reaches the right audience, and supports real digital growth.
+          </p>
+
+          <div class="flex flex-col gap-4 w-full">
+            <a href="mailto:yatharthrana12@gmail.com" class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-brand-sky hover:bg-brand-sky/5 transition-all duration-300">
+              <div class="w-10 h-10 rounded-xl bg-brand-sky/10 flex items-center justify-center text-brand-sky">
+                <i class="fa-solid fa-envelope"></i>
+              </div>
+              <div class="text-left">
+                <span class="text-[10px] font-semibold tracking-wider text-brand-mute uppercase block">Email Coordinates</span>
+                <span class="text-sm font-medium text-white">yatharthrana12@gmail.com</span>
+              </div>
+            </a>
+
+            <a href="https://in.linkedin.com/in/yatharth-rana-92a6473a7" target="_blank" rel="noopener noreferrer" class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-brand-blue hover:bg-brand-blue/5 transition-all duration-300">
+              <div class="w-10 h-10 rounded-xl bg-brand-blue/10 flex items-center justify-center text-brand-blue">
+                <i class="fa-brands fa-linkedin-in"></i>
+              </div>
+              <div class="text-left">
+                <span class="text-[10px] font-semibold tracking-wider text-brand-mute uppercase block">Professional Profile</span>
+                <span class="text-sm font-medium text-white">LinkedIn Directory</span>
+              </div>
+            </a>
+
+            <a href="https://instagram.com/yatharthrana12" target="_blank" rel="noopener noreferrer" class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-brand-violet hover:bg-brand-violet/5 transition-all duration-300">
+              <div class="w-10 h-10 rounded-xl bg-brand-violet/10 flex items-center justify-center text-brand-violet">
+                <i class="fa-brands fa-instagram"></i>
+              </div>
+              <div class="text-left">
+                <span class="text-[10px] font-semibold tracking-wider text-brand-mute uppercase block">Instagram Hub</span>
+                <span class="text-sm font-medium text-white">@yatharthrana12</span>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <div class="lg:col-span-7 w-full">
+          <div class="glass-card-interactive spotlight-card rounded-2xl p-8">
+            <form id="contact-form" class="flex flex-col gap-6">
+              <div class="relative">
+                <input
+                  type="text"
+                  required
+                  placeholder=" "
+                  id="form-name"
+                  class="form-input w-full bg-transparent border-b border-white/10 focus:border-brand-sky py-3 text-white text-sm outline-none transition-all duration-300 placeholder-shown:placeholder-transparent"
+                />
+                <label for="form-name" class="form-label absolute left-0 top-3 text-xs tracking-wider uppercase text-brand-mute pointer-events-none transition-all duration-300">
+                  Full Identity
+                </label>
+              </div>
+
+              <div class="relative">
+                <input
+                  type="email"
+                  required
+                  placeholder=" "
+                  id="form-email"
+                  class="form-input w-full bg-transparent border-b border-white/10 focus:border-brand-sky py-3 text-white text-sm outline-none transition-all duration-300 placeholder-shown:placeholder-transparent"
+                />
+                <label for="form-email" class="form-label absolute left-0 top-3 text-xs tracking-wider uppercase text-brand-mute pointer-events-none transition-all duration-300">
+                  Email Coordinates
+                </label>
+              </div>
+
+              <div class="relative">
+                <textarea
+                  required
+                  rows="4"
+                  placeholder=" "
+                  id="form-message"
+                  class="form-input w-full bg-transparent border-b border-white/10 focus:border-brand-sky py-3 text-white text-sm outline-none transition-all duration-300 resize-none placeholder-shown:placeholder-transparent"
+                ></textarea>
+                <label for="form-message" class="form-label absolute left-0 top-3 text-xs tracking-wider uppercase text-brand-mute pointer-events-none transition-all duration-300">
+                  Project Details
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                id="submit-btn"
+                class="w-full py-4 rounded-xl font-display text-xs font-semibold tracking-wider uppercase bg-gradient-to-r from-brand-blue to-brand-sky text-white hover:shadow-lg hover:shadow-brand-sky/20 transition-all duration-300 flex items-center justify-center gap-2"
+              >
+                Transmit Proposal <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="relative bg-brand-bg py-12 px-6 md:px-12 border-t border-brand-edge z-10">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="text-center md:text-left">
+        <span class="font-display font-bold text-lg text-white">Yatharth Rana</span>
+        <p class="text-xs text-brand-mute font-light mt-1">Growth &amp; Performance Marketer</p>
+      </div>
+      
+      <div class="flex gap-4">
+        <a href="https://in.linkedin.com/in/yatharth-rana-92a6473a7" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full border border-white/5 hover:border-brand-sky hover:text-brand-sky flex items-center justify-center text-brand-mute transition-all duration-300">
+          <i class="fa-brands fa-linkedin-in text-xs"></i>
+        </a>
+        <a href="https://instagram.com/yatharthrana12" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full border border-white/5 hover:border-brand-violet hover:text-brand-violet flex items-center justify-center text-brand-mute transition-all duration-300">
+          <i class="fa-brands fa-instagram text-xs"></i>
+        </a>
+      </div>
+
+      <p class="text-[10px] tracking-wider uppercase text-brand-mute font-semibold">
+        &copy; 2026 Yatharth Rana. Built for Performance.
+      </p>
+    </div>
+  </footer>
+
+  <!-- ── SCRIPTS ── -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      
+      // Determine device sizing properties to dynamically adjust execution profiles
+      const isMobile = window.innerWidth < 1024;
+
+      /* ═══════════════════════════════════════════════════
+         LENIS BUTTER-SMOOTH SCROLL ARCHITECTURE
+      ═══════════════════════════════════════════════════ */
+      const lenis = new Lenis({
+        duration: isMobile ? 1.0 : 1.4,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        infinite: false
+      });
+
+      // Synchronize Lenis scroll positions with GSAP updates
+      lenis.on('scroll', ScrollTrigger.update);
+      
+      gsap.ticker.add((time) => {
+        lenis.raf(time * 1000);
+      });
+      gsap.ticker.lagSmoothing(0);
+
+
+      /* ═══════════════════════════════════════════════════
+         THREE.JS DYNAMIC 3D BACKGROUND ENGINE
+      ═══════════════════════════════════════════════════ */
+      const canvas = document.getElementById('bg-canvas');
+      const scene = new THREE.Scene();
+      
+      const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: !isMobile, alpha: false });
+      
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1 : 2));
+      renderer.setClearColor(0x030303, 1);
+
+      scene.fog = new THREE.FogExp2(0x030303, 0.015);
+      camera.position.set(0, 5, 28);
+
+      /* ── 3D LIGHT SOURCES ── */
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.18);
+      scene.add(ambientLight);
+
+      // Tracking Spotlight
+      const pointLight = new THREE.PointLight(0x06B6D4, 15, 100);
+      pointLight.position.set(0, 0, 10);
+      scene.add(pointLight);
+
+      // Accent Lights
+      const dirLightViolet = new THREE.DirectionalLight(0x8B5CF6, 3);
+      dirLightViolet.position.set(15, 20, 15);
+      scene.add(dirLightViolet);
+
+      const dirLightBlue = new THREE.DirectionalLight(0x2563EB, 2);
+      dirLightBlue.position.set(-15, -10, 10);
+      scene.add(dirLightBlue);
+
+      /* ── FLOATING GLASS TORUS KNOT ── */
+      const tKnotGeo = new THREE.TorusKnotGeometry(3.6, 0.95, isMobile ? 80 : 160, 16);
+      const shinyMaterial = new THREE.MeshStandardMaterial({
+        color: 0x111827,
+        roughness: 0.08,
+        metalness: 0.95,
+        flatShading: true
+      });
+      const torusKnot = new THREE.Mesh(tKnotGeo, shinyMaterial);
+      torusKnot.position.set(-7, 3, -4);
+      scene.add(torusKnot);
+
+      /* ── FLOATING WIREFRAME ICOSAHEDRON ── */
+      const icoGeo = new THREE.IcosahedronGeometry(4.8, 0);
+      const icoWire = new THREE.Mesh(icoGeo, new THREE.MeshStandardMaterial({
+        color: 0x06B6D4,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.35
+      }));
+      icoWire.position.set(12, -4, -12);
+      scene.add(icoWire);
+
+      /* ── FLOATING CHROME RING ── */
+      const ringGeo = new THREE.TorusGeometry(4.8, 0.8, 16, isMobile ? 40 : 100);
+      const torusRing = new THREE.Mesh(ringGeo, new THREE.MeshStandardMaterial({
+        color: 0x8B5CF6,
+        roughness: 0.15,
+        metalness: 0.9
+      }));
+      torusRing.position.set(2, -10, -10);
+      scene.add(torusRing);
+
+      /* ── DYNAMIC FLOATING PYRAMID SHARDS ── */
+      const shardGroup = new THREE.Group();
+      const shardGeo = new THREE.ConeGeometry(0.5, 1.1, 4);
+      const shardMat = new THREE.MeshStandardMaterial({
+        color: 0x06B6D4,
+        roughness: 0.1,
+        metalness: 0.9,
+        flatShading: true
+      });
+      const shardsCount = isMobile ? 8 : 20;
+      for (let i = 0; i < shardsCount; i++) {
+        const shard = new THREE.Mesh(shardGeo, shardMat);
+        shard.position.set(
+          (Math.random() - 0.5) * 40,
+          (Math.random() - 0.5) * 30,
+          (Math.random() - 0.5) * 80 - 10
+        );
+        shard.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+        shard.userData = {
+          rotX: (Math.random() - 0.5) * 0.015,
+          rotY: (Math.random() - 0.5) * 0.015,
+          floatOffset: Math.random() * Math.PI * 2
+        };
+        shardGroup.add(shard);
+      }
+      scene.add(shardGroup);
+
+      /* ── 3D DOUBLE-HELIX STAR VORTEX ── */
+      const particleCount = isMobile ? 1200 : 3500;
+      const particleGeo = new THREE.BufferGeometry();
+      const particlePos = new Float32Array(particleCount * 3);
+
+      for (let i = 0; i < particleCount; i++) {
+        const t = (i / particleCount) * 140 - 70;
+        const angle = t * 0.35;
+        const radius = 9 + Math.sin(t * 0.08) * 3;
+        const offset = (i % 2 === 0) ? 0 : Math.PI;
+
+        particlePos[i * 3]     = Math.cos(angle + offset) * radius + (Math.random() - 0.5) * 2;
+        particlePos[i * 3 + 1] = Math.sin(angle + offset) * radius + (Math.random() - 0.5) * 2;
+        particlePos[i * 3 + 2] = t;
+      }
+      particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
+
+      const particleMat = new THREE.PointsMaterial({
+        color: 0x06B6D4,
+        size: 0.14,
+        transparent: true,
+        opacity: 0.55,
+        sizeAttenuation: true
+      });
+      const particles = new THREE.Points(particleGeo, particleMat);
+      scene.add(particles);
+
+
+      /* ── PROCEDURAL 3D DIGITAL SWORD ── */
+      const swordGroup = new THREE.Group();
+      
+      const bladeMaterialLeft = new THREE.MeshStandardMaterial({
+        color: 0x06B6D4,
+        emissive: 0x06B6D4,
+        emissiveIntensity: 0.8,
+        roughness: 0.1,
+        metalness: 0.9,
+        transparent: true,
+        opacity: 1
+      });
+      const bladeMaterialRight = new THREE.MeshStandardMaterial({
+        color: 0x8B5CF6,
+        emissive: 0x8B5CF6,
+        emissiveIntensity: 0.8,
+        roughness: 0.1,
+        metalness: 0.9,
+        transparent: true,
+        opacity: 1
+      });
+      const hiltMaterial = new THREE.MeshStandardMaterial({
+        color: 0x111827,
+        roughness: 0.5,
+        metalness: 0.8,
+        transparent: true,
+        opacity: 1
+      });
+
+      // Left blade half
+      const bladeLeftGeo = new THREE.BoxGeometry(0.32, 11, 0.1);
+      const bladeLeft = new THREE.Mesh(bladeLeftGeo, bladeMaterialLeft);
+      bladeLeft.position.set(-0.16, 5.5, 0);
+      swordGroup.add(bladeLeft);
+
+      // Right blade half
+      const bladeRightGeo = new THREE.BoxGeometry(0.32, 11, 0.1);
+      const bladeRight = new THREE.Mesh(bladeRightGeo, bladeMaterialRight);
+      bladeRight.position.set(0.16, 5.5, 0);
+      swordGroup.add(bladeRight);
+
+      // Guard
+      const guardLeft = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.4, 0.4), hiltMaterial);
+      guardLeft.position.set(-0.7, 0, 0);
+      const guardRight = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.4, 0.4), hiltMaterial);
+      guardRight.position.set(0.7, 0, 0);
+      swordGroup.add(guardLeft);
+      swordGroup.add(guardRight);
+
+      // Grip
+      const handleGeo = new THREE.CylinderGeometry(0.18, 0.18, 2.8, 8);
+      const handle = new THREE.Mesh(handleGeo, hiltMaterial);
+      handle.position.set(0, -1.4, 0);
+      swordGroup.add(handle);
+
+      // Pommel Sphere
+      const pommelGeo = new THREE.SphereGeometry(0.35, 8, 8);
+      const pommel = new THREE.Mesh(pommelGeo, hiltMaterial);
+      pommel.position.set(0, -2.9, 0);
+      swordGroup.add(pommel);
+
+      swordGroup.position.set(0, 1.5, 9);
+      swordGroup.rotation.set(0, 0, -Math.PI / 6);
+      scene.add(swordGroup);
+
+      // Ashes Particles setup
+      const ashCount = isMobile ? 250 : 800;
+      const ashGeo = new THREE.BufferGeometry();
+      const ashPositions = new Float32Array(ashCount * 3);
+      const ashSpeeds = [];
+
+      for (let i = 0; i < ashCount; i++) {
+        const y = Math.random() * 11;
+        const x = (Math.random() - 0.5) * 1.5;
+        const z = (Math.random() - 0.5) * 1.0;
+        ashPositions[i * 3] = x;
+        ashPositions[i * 3 + 1] = y;
+        ashPositions[i * 3 + 2] = z;
+        
+        ashSpeeds.push({
+          x: (Math.random() - 0.5) * 0.15,
+          y: Math.random() * 0.1 + 0.05,
+          z: (Math.random() - 0.5) * 0.15,
+          originalX: x,
+          originalY: y,
+          originalZ: z
+        });
+      }
+      ashGeo.setAttribute('position', new THREE.BufferAttribute(ashPositions, 3));
+      const ashMat = new THREE.PointsMaterial({
+        color: 0x94A3B8,
+        size: 0.16,
+        transparent: true,
+        opacity: 0,
+        sizeAttenuation: true
+      });
+      const ashParticles = new THREE.Points(ashGeo, ashMat);
+      swordGroup.add(ashParticles);
+
+
+      /* ── NEW: DYNAMIC 3D DATA GRID FOR THE BOTTOM OF THE PAGE ── */
+      const gridSegments = isMobile ? 12 : 30;
+      const terrainGeo = new THREE.PlaneGeometry(55, 55, gridSegments, gridSegments);
+      const terrainMat = new THREE.MeshStandardMaterial({
+        color: 0x06B6D4,
+        wireframe: true,
+        transparent: true,
+        opacity: 0, // Starts completely hidden, fades in dynamically on scroll
+        roughness: 0.5,
+        metalness: 0.8
+      });
+      const terrainGrid = new THREE.Mesh(terrainGeo, terrainMat);
+      terrainGrid.position.set(0, -25, -5);
+      terrainGrid.rotation.x = -Math.PI / 2;
+      scene.add(terrainGrid);
+
+
+      /* ═══════════════════════════════════════════════════
+         GSAP 3D SCROLL MOTION CHOREOGRAPHY
+      ═══════════════════════════════════════════════════ */
+      const scroll3DTimeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: "body",
+          start: "top top",
+          end: "bottom bottom",
+          scrub: isMobile ? 1.0 : 2.0, // Increased scrub factor to 2.0 on desktop for smoother travel
+        }
+      });
+
+      const ashWarp = { progress: 0 };
+
+      scroll3DTimeline
+        // Camera fly-through & transforms mapping
+        .to(camera.position, { z: 2.2, y: -20, x: 3.5, ease: "none" }, 0)
+        .to(camera.rotation, { x: 0.25, y: -0.35, z: -0.18, ease: "none" }, 0)
+        .to(camera, { fov: 65, onUpdate: () => camera.updateProjectionMatrix(), ease: "none" }, 0)
+
+        // Blade separations
+        .to(bladeLeft.position, { x: -2.5, ease: "none" }, 0)
+        .to(bladeRight.position, { x: 2.5, ease: "none" }, 0)
+        .to(guardLeft.position, { x: -3.0, ease: "none" }, 0)
+        .to(guardRight.position, { x: 3.0, ease: "none" }, 0)
+        .to(swordGroup.position, { z: 12, y: 3, ease: "none" }, 0)
+
+        // Fades
+        .to([bladeMaterialLeft, bladeMaterialRight, hiltMaterial], { opacity: 0, duration: 0.35 }, 0.1)
+        .to(ashMat, { opacity: 1, duration: 0.15 }, 0.1)
+
+        // Particle Dispersion updates
+        .to(ashWarp, {
+          progress: 12,
+          onUpdate: () => {
+            const arr = ashGeo.attributes.position.array;
+            for (let i = 0; i < ashCount; i++) {
+              const speed = ashSpeeds[i];
+              arr[i * 3]     = speed.originalX + speed.x * ashWarp.progress;
+              arr[i * 3 + 1] = speed.originalY + speed.y * ashWarp.progress;
+              arr[i * 3 + 2] = speed.originalZ + speed.z * ashWarp.progress;
+            }
+            ashGeo.attributes.position.needsUpdate = true;
+          },
+          ease: "none"
+        }, 0.12)
+
+        .to(ashMat, { opacity: 0, duration: 0.25 }, 0.35)
+
+        // Helix adjustments
+        .to(particles.rotation, { z: Math.PI * 1.5, y: Math.PI * 0.5, ease: "none" }, 0)
+        .to(particles.scale, { x: 1.8, y: 1.8, z: 1.2, ease: "none" }, 0)
+
+        // Secondary transforms
+        .to(torusKnot.position, { z: 30, y: 18, x: 6, ease: "none" }, 0)
+        .to(icoWire.position, { z: 8, y: -2, x: -6, ease: "none" }, 0)
+        .to(torusRing.position, { z: 15, y: 4, x: 5, ease: "none" }, 0)
+        .to(shardGroup.position, { z: 35, y: 10, ease: "none" }, 0)
+
+        // Dynamic Data Grid rising and tilting at the bottom of the page
+        .to(terrainMat, { opacity: isMobile ? 0.25 : 0.45, ease: "none" }, 0.38)
+        .to(terrainGrid.position, { y: -14, z: 4, ease: "none" }, 0.38)
+        .to(terrainGrid.rotation, { z: Math.PI * 0.25, ease: "none" }, 0.38);
+
+
+      /* ── INTERACTIVE MOUSE LIGHT AND MOMENTUM ── */
+      let mouseX = 0, mouseY = 0;
+      let targetX = 0, targetY = 0;
+
+      if (!isMobile) {
+        window.addEventListener('mousemove', (e) => {
+          targetX = (e.clientX / window.innerWidth) * 2 - 1;
+          targetY = -(e.clientY / window.innerHeight) * 2 + 1;
+        });
+      }
+
+      /* ── RENDER TICK LOOP ── */
+      let clock = new THREE.Clock();
+
+      function tick() {
+        const elapsedTime = clock.getElapsedTime();
+
+        if (!isMobile) {
+          mouseX += (targetX - mouseX) * 0.05;
+          mouseY += (targetY - mouseY) * 0.05;
+
+          pointLight.position.x = mouseX * 25;
+          pointLight.position.y = mouseY * 15;
+
+          camera.position.x += (mouseX * 3.5 - camera.position.x) * 0.03;
+          camera.position.y += (mouseY * 2.2 - camera.position.y) * 0.03;
+        }
+
+        torusKnot.rotation.x = elapsedTime * 0.14;
+        torusKnot.rotation.y = elapsedTime * 0.08;
+
+        icoWire.rotation.x = elapsedTime * -0.08;
+        icoWire.rotation.y = elapsedTime * 0.18;
+
+        torusRing.rotation.x = elapsedTime * 0.22;
+        torusRing.rotation.y = elapsedTime * -0.12;
+
+        swordGroup.rotation.y = Math.sin(elapsedTime * 0.5) * 0.1;
+
+        shardGroup.children.forEach(shard => {
+          shard.rotation.x += shard.userData.rotX;
+          shard.rotation.y += shard.userData.rotY;
+          shard.position.y += Math.sin(elapsedTime * 0.8 + shard.userData.floatOffset) * 0.005;
+        });
+
+        particles.rotation.y = elapsedTime * 0.012;
+
+        // Dynamic 3D Wave morphing on the Data Grid
+        const posAttr = terrainGrid.geometry.attributes.position;
+        for (let i = 0; i < posAttr.count; i++) {
+          const x = posAttr.getX(i);
+          const y = posAttr.getY(i);
+          // Combined Sine wave generator for dynamic organic mesh waving
+          const waveZ = Math.sin(x * 0.15 + elapsedTime * 1.4) * Math.cos(y * 0.15 + elapsedTime * 1.4) * 1.8;
+          posAttr.setZ(i, waveZ);
+        }
+        posAttr.needsUpdate = true;
+
+        renderer.render(scene, camera);
+        requestAnimationFrame(tick);
+      }
+      tick();
+
+      /* ── VIEWPORT RESIZE HANDLER ── */
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+
+      /* ═══════════════════════════════════════════════════
+         INTERACTIVE HOVER & MOTION CONTROLLERS
+      ═══════════════════════════════════════════════════ */
+
+      /* ── ADVANCED 3D TILT ON INTERACTIVE CARDS (DESKTOP ONLY) ── */
+      if (!isMobile) {
+        const tiltCards = document.querySelectorAll('.glass-card-interactive');
+        tiltCards.forEach(card => {
+          card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            const rotateX = ((y - centerY) / centerY) * -10;
+            const rotateY = ((x - centerX) / centerX) * 10;
+
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-6px)`;
+            card.style.boxShadow = `0 20px 40px rgba(0,0,0,0.6), 0 0 30px rgba(6,182,212,0.15)`;
+            card.style.borderColor = 'rgba(6, 182, 212, 0.25)';
+            
+            card.style.setProperty('--mouse-x', `${x}px`);
+            card.style.setProperty('--mouse-y', `${y}px`);
+          });
+
+          card.addEventListener('mouseleave', () => {
+            card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+            card.style.boxShadow = 'none';
+            card.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+          });
+        });
+      }
+
+      /* ── FLUID TRAILING CUSTOM MOUSE CURSOR ── */
+      const cursor = document.getElementById('custom-cursor');
+      const cursorRing = document.getElementById('custom-cursor-ring');
+      
+      let cursorX = 0, cursorY = 0;
+      let ringX = 0, ringY = 0;
+
+      if (!isMobile) {
+        window.addEventListener('mousemove', (e) => {
+          cursorX = e.clientX;
+          cursorY = e.clientY;
+          
+          cursor.style.left = `${cursorX}px`;
+          cursor.style.top = `${cursorY}px`;
+        });
+
+        function animateCursor() {
+          ringX += (cursorX - ringX) * 0.12;
+          ringY += (cursorY - ringY) * 0.12;
+
+          cursorRing.style.left = `${ringX}px`;
+          cursorRing.style.top = `${ringY}px`;
+
+          requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        const clickables = document.querySelectorAll('a, button, .filter-btn, .glass-card-interactive');
+        clickables.forEach(item => {
+          item.addEventListener('mouseenter', () => {
+            cursorRing.classList.add('scale-150', 'border-brand-sky', 'bg-brand-sky/5');
+            cursor.classList.add('scale-0');
+          });
+          item.addEventListener('mouseleave', () => {
+            cursorRing.classList.remove('scale-150', 'border-brand-sky', 'bg-brand-sky/5');
+            cursor.classList.remove('scale-0');
+          });
+        });
+      }
+
+
+      /* ═══════════════════════════════════════════════════
+         GSAP SPLIT-MASK HERO TITLE TEXT REVEAL
+      ═══════════════════════════════════════════════════ */
+      const textTl = gsap.timeline();
+      textTl.to('.hero-reveal', {
+        y: 0,
+        opacity: 1,
+        duration: 1.3,
+        stagger: 0.15,
+        ease: 'power4.out',
+      })
+      .to('.floating-card-init', {
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        duration: 1,
+        stagger: 0.1,
+        ease: 'back.out(1.4)'
+      }, '-=0.6');
+
+
+      /* ── SCROLLED NAVBAR HEADER TINT ── */
+      window.addEventListener('scroll', () => {
+        const nav = document.getElementById('nav');
+        if (window.scrollY > 50) {
+          nav.classList.add('bg-brand-bg/85', 'backdrop-blur-md', 'border-b', 'border-brand-edge', 'py-4');
+          nav.classList.remove('bg-transparent', 'py-6');
+        } else {
+          nav.classList.remove('bg-brand-bg/85', 'backdrop-blur-md', 'border-b', 'border-brand-edge', 'py-4');
+          nav.classList.add('bg-transparent', 'py-6');
+        }
+      });
+
+      /* ── INTEGRATED SMOOTH SCROLL ANCHOR CLICKS (LENIS COMPATIBLE) ── */
+      const links = document.querySelectorAll('a[href^="#"]');
+      links.forEach(link => {
+        link.addEventListener('click', (e) => {
+          const targetId = link.getAttribute('href');
+          const targetSection = document.querySelector(targetId);
+          if (targetSection) {
+            e.preventDefault();
+            lenis.scrollTo(targetSection, {
+              offset: -80, // Accounts for sticky nav height
+              duration: 1.5,
+              immediate: false
+            });
+          }
+        });
+      });
+
+      /* ── FLOATING INPUT FIELD ACTIVE LABELS (FIXED AUTOFILL & EVENT STATES) ── */
+      const formInputs = document.querySelectorAll('.form-input');
+      
+      function updateLabelState(input) {
+        const label = input.nextElementSibling;
+        if (input.value.trim() !== '' || document.activeElement === input) {
+          label.classList.add('-translate-y-6', 'text-brand-sky', 'font-semibold', 'text-[10px]');
+        } else {
+          label.classList.remove('-translate-y-6', 'text-brand-sky', 'font-semibold', 'text-[10px]');
+        }
+      }
+
+      formInputs.forEach(input => {
+        input.addEventListener('focus', () => updateLabelState(input));
+        input.addEventListener('blur', () => updateLabelState(input));
+        input.addEventListener('input', () => updateLabelState(input));
+        input.addEventListener('change', () => updateLabelState(input));
+      });
+
+      // Interval checking function handles quiet browser autofill events cleanly
+      setInterval(() => {
+        formInputs.forEach(input => updateLabelState(input));
+      }, 500);
+
+
+      /* ── STAT COUNTERS ANIMATION TRIGGER ── */
+      const counters = document.querySelectorAll('.counter');
+      counters.forEach(counter => {
+        const target = parseInt(counter.getAttribute('data-target'), 10);
+        
+        ScrollTrigger.create({
+          trigger: counter,
+          start: 'top 85%',
+          onEnter: () => {
+            let start = 0;
+            const duration = 2000; 
+            const stepTime = Math.max(Math.floor(duration / target), 15);
+            
+            const timer = setInterval(() => {
+              start += 1;
+              counter.textContent = start;
+              if (start >= target) {
+                clearInterval(timer);
+                counter.textContent = target;
+              }
+            }, stepTime);
+          }
+        });
+      });
+
+      /* ── SKILLS FILTER CARD TRANSITIONS ── */
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      const skillItems = document.querySelectorAll('.skill-card-item');
+
+      filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          filterBtns.forEach(b => {
+            b.classList.remove('bg-brand-violet', 'text-white', 'shadow-lg', 'shadow-brand-violet/20');
+            b.classList.add('bg-white/5', 'text-brand-mute', 'border', 'border-white/5');
+          });
+
+          btn.classList.add('bg-brand-violet', 'text-white', 'shadow-lg', 'shadow-brand-violet/20');
+          btn.classList.remove('bg-white/5', 'text-brand-mute', 'border', 'border-white/5');
+
+          const filter = btn.getAttribute('data-filter');
+
+          skillItems.forEach(item => {
+            const cat = item.getAttribute('data-cat');
+            if (filter === 'all' || cat === filter) {
+              gsap.to(item, { scale: 1, opacity: 1, duration: 0.4, display: 'block' });
+            } else {
+              gsap.to(item, { scale: 0.9, opacity: 0, duration: 0.4, display: 'none' });
+            }
+          });
+        });
+      });
+
+      /* ── ACTIVE NAV LINK UPDATE ON SCROLL ── */
+      const sections = document.querySelectorAll('section');
+      const navLinks = document.querySelectorAll('.nav-link');
+
+      window.addEventListener('scroll', () => {
+        let current = 'hero';
+        sections.forEach(sec => {
+          const top = sec.offsetTop;
+          if (window.scrollY >= (top - 200)) {
+            current = sec.getAttribute('id');
+          }
+        });
+
+        navLinks.forEach(link => {
+          const linkSec = link.getAttribute('data-section');
+          const indicator = link.querySelector('.nav-indicator');
+          if (indicator) {
+            if (linkSec === current) {
+              link.classList.add('text-white');
+              link.classList.remove('text-brand-mute');
+              indicator.classList.remove('scale-x-0');
+              indicator.classList.add('scale-x-100');
+            } else {
+              link.classList.remove('text-white');
+              link.classList.add('text-brand-mute');
+              indicator.classList.remove('scale-x-100');
+              indicator.classList.add('scale-x-0');
+            }
+          }
+        });
+      });
+
+      /* ── CONTACT FORM CLIENT TRANSITION RESPONSE ── */
+      const contactForm = document.getElementById('contact-form');
+      const submitBtn = document.getElementById('submit-btn');
+
+      contactForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        submitBtn.innerHTML = 'Transmission Successful <i class="fa-solid fa-check"></i>';
+        submitBtn.disabled = true;
+
+        setTimeout(() => {
+          contactForm.reset();
+          formInputs.forEach(input => updateLabelState(input));
+          submitBtn.innerHTML = 'Transmit Proposal <i class="fa-solid fa-paper-plane"></i>';
+          submitBtn.disabled = false;
+        }, 3000);
+      });
+
+      /* ── SCROLL TRIGGER ENTRANCE REVEALS FOR SECTIONS ── */
+      const revealSections = ['about', 'skills', 'services', 'work', 'stats', 'approach', 'why', 'contact'];
+      revealSections.forEach(secId => {
+        const sec = document.getElementById(secId);
+        if (sec) {
+          gsap.from(sec.children, {
+            scrollTrigger: {
+              trigger: sec,
+              start: "top 80%",
+              toggleActions: "play none none none"
+            },
+            opacity: 0,
+            y: 40,
+            duration: 1,
+            stagger: 0.15,
+            ease: "power3.out"
+          });
+        }
+      });
+
+    });
+  </script>
+
+</body>
+</html>
